@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, Tooltip } from 'react-leaflet';
 import L from 'leaflet';
 
 import icon from 'leaflet/dist/images/marker-icon.png';
@@ -14,15 +14,29 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-function MapController({ selectedLocation, schedule }) {
+// 🔴 紅色戰略圖釘 (使用 CSS Filter 變色)
+const RedIcon = L.icon({
+    iconUrl: icon,
+    shadowUrl: iconShadow,
+    iconSize: [25, 41],
+    iconAnchor: [12, 41],
+    popupAnchor: [1, -34],
+    className: 'hue-rotate-180 brightness-75 contrast-200' // 讓藍色變紅色的魔法
+});
+
+function MapController({ selectedLocation, schedule, tempMarker }) {
     const map = useMap();
 
     useEffect(() => {
-        if (selectedLocation && selectedLocation.coords) {
-            // 飛過去時稍微拉近一點，讓使用者看清楚位置
+        // 優先處理戰略圖釘的移動
+        if (tempMarker) {
+            map.flyTo(tempMarker.coords, 16, {
+                duration: 1.0
+            });
+        }
+        else if (selectedLocation && selectedLocation.coords) {
             map.flyTo(selectedLocation.coords, 15, {
-                duration: 1.2,
-                easeLinearity: 0.25
+                duration: 1.2
             });
         } else if (schedule.length > 0) {
             const validPoints = schedule.filter(s => s.coords).map(s => s.coords);
@@ -31,12 +45,12 @@ function MapController({ selectedLocation, schedule }) {
                 map.fitBounds(bounds, { padding: [50, 50] });
             }
         }
-    }, [selectedLocation, schedule, map]);
+    }, [selectedLocation, schedule, map, tempMarker]);
 
     return null;
 }
 
-const MapComponent = ({ schedule, selectedLocation }) => {
+const MapComponent = ({ schedule, selectedLocation, tempMarker }) => {
     const validPoints = schedule
         .filter(item => item.coords)
         .map(item => ({ ...item, position: item.coords }));
@@ -49,16 +63,17 @@ const MapComponent = ({ schedule, selectedLocation }) => {
             center={center} 
             zoom={8} 
             style={{ height: "100%", width: "100%" }}
-            scrollWheelZoom={true} // 開啟滑鼠滾輪縮放
-            zoomControl={true}     // 開啟左上角 + - 按鈕
+            scrollWheelZoom={true}
+            zoomControl={true}
         >
             <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                attribution='© OpenStreetMap'
                 url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
             
-            <MapController selectedLocation={selectedLocation} schedule={schedule} />
+            <MapController selectedLocation={selectedLocation} schedule={schedule} tempMarker={tempMarker} />
 
+            {/* 一般行程圖釘 */}
             {validPoints.map((point, idx) => (
                 <Marker key={idx} position={point.position}>
                     <Popup>
@@ -69,6 +84,15 @@ const MapComponent = ({ schedule, selectedLocation }) => {
                     </Popup>
                 </Marker>
             ))}
+
+            {/* 🔴 戰略地圖圖釘 (15秒自動消失) */}
+            {tempMarker && (
+                <Marker position={tempMarker.coords} icon={RedIcon} zIndexOffset={1000}>
+                    <Tooltip direction="right" permanent offset={[10, -25]} className="font-bold text-red-600 bg-white border border-red-200 shadow-md">
+                        {tempMarker.label}
+                    </Tooltip>
+                </Marker>
+            )}
 
             {positions.length > 1 && (
                 <Polyline positions={positions} color="#0ea5e9" weight={4} opacity={0.7} dashArray="8, 8" />

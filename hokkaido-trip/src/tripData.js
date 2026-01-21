@@ -119,7 +119,16 @@ export const tripData = {
           "activity": "AEON Mall 旭川站前", 
           "desc": "【補給戰略】車站直結。動漫迷奔 3F『Animate』。超市 (1F) 買草莓、薯條湯咖哩味、Seicomart 炸雞。", 
           "type": "shop", 
-          "coords": [43.7626, 142.3583] 
+          "coords": [43.7626, 142.3583],
+          "strategies": [
+            {
+              "title": "Uniqlo 旭川旭町店",
+              "tag": "指定店鋪",
+              "desc": "【重要】您指定的地址位於旭町，非AEON站前店。請依此地址導航。",
+              "address": "7 Chome-841-120 Asahimachi 1 Jo, Asahikawa, Hokkaido 070-0831日本",
+              "coords": [43.7847, 142.3553] 
+            }
+          ]
         }
       ]
     },
@@ -179,14 +188,23 @@ export const tripData = {
           "activity": "小樽運河", 
           "desc": "拍照點：淺草橋上。紅磚配白雪很美但路滑。不要停留太久，把時間留給商店街。", 
           "type": "highlight", 
-          "coords": [43.1994, 141.0016] 
+          "coords": [43.1994, 141.0016]
         },
         { 
           "time": "11:00", 
           "activity": "堺町通商店街", 
           "desc": "【甜點攻略】六花亭『雪こんチーズ』(賞味期2hr)；北菓樓『夢不思議泡芙』；LeTAO本店限定『生』雙層起司蛋糕。", 
           "type": "food", 
-          "coords": [43.1930, 141.0076] 
+          "coords": [43.1930, 141.0076],
+          "strategies": [
+            {
+              "title": "Uniqlo 小樽店",
+              "tag": "動線陷阱",
+              "desc": "位於『JR南小樽站』上坡處。最佳戰略：先在南小樽站買完寄放，再走下坡逛街。",
+              "address": "2-7 Sumiyoshicho, Otaru, Hokkaido 047-0015日本",
+              "coords": [43.1856, 141.0076]
+            }
+          ]
         },
         { 
           "time": "13:00", 
@@ -200,7 +218,7 @@ export const tripData = {
           "activity": "札幌市區車遊", 
           "desc": "車遊時計台、舊道廳。重點是大通公園『白色燈樹節』，整條公園璀璨燈飾，準備好相機。", 
           "type": "highlight", 
-          "coords": [43.0621, 141.3544] 
+          "coords": [43.0621, 141.3544]
         },
         { 
           "time": "18:00", 
@@ -212,9 +230,25 @@ export const tripData = {
         { 
           "time": "20:00", 
           "activity": "狸小路購物攻略", 
-          "desc": "藥妝推『札幌藥妝』環境好。深夜補貨『唐吉訶德』(4丁目) 24hr，但退稅排隊很久。ACG去 Norbesa。", 
+          "desc": "藥妝推『札幌藥妝』環境好。深夜補貨『唐吉訶德』。ACG去 Norbesa。", 
           "type": "shop", 
-          "coords": [43.0575, 141.3533] 
+          "coords": [43.0575, 141.3533],
+          "strategies": [
+            {
+              "title": "MEGA 唐吉訶德",
+              "tag": "深夜唯一解",
+              "desc": "24小時營業。Uniqlo關門後的救星。B1食品區必逛。避雷：21:00後退稅要排很久。",
+              "address": "4 Chome-12-1 Minami 3 Jonishi, Chuo Ward, Sapporo, Hokkaido 060-0063日本",
+              "coords": [43.0573, 141.3534]
+            },
+            {
+              "title": "Uniqlo 札幌東急百貨",
+              "tag": "新旗艦店",
+              "desc": "【ESTA搬遷】現在札站南口東急百貨7F。20:00就關門！晚餐前務必先去。",
+              "address": "日本〒060-0004 Hokkaido, Sapporo, Chuo Ward, Kita 4 Jonishi, 2 Chome−1 東急百貨店さっぽろ店 7階",
+              "coords": [43.0632, 141.3536]
+            }
+          ]
         }
       ]
     },
@@ -251,7 +285,23 @@ export const tripData = {
           "activity": "金森紅磚倉庫", 
           "desc": "必吃『Snaffle's』起司歐姆蕾。隱藏玩法：金森洋物館內 200日圓試吃現拿蛋糕+咖啡。", 
           "type": "shop", 
-          "coords": [41.7667, 140.7169] 
+          "coords": [41.7667, 140.7169],
+          "strategies": [
+            {
+              "title": "幸運小丑漢堡",
+              "tag": "函館靈魂",
+              "desc": "【全日本僅函館有】必點『中華雞腿堡』與『瓜拿納汽水』。末廣店就在金森倉庫旁。",
+              "address": "14-17 Suehirocho, Hakodate, Hokkaido 040-0053日本",
+              "coords": [41.7663, 140.7161]
+            },
+            {
+              "title": "Uniqlo 函館昭和店",
+              "tag": "不推薦",
+              "desc": "【交通警告】遠離市區，市電不到。來回計程車費比買衣服還貴。不建議前往。",
+              "address": "1 Chome-29-6 Showa, Hakodate, Hokkaido 041-0812日本",
+              "coords": [41.8153, 140.7483]
+            }
+          ]
         },
         { 
           "time": "17:30", 

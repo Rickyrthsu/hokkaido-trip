@@ -3,7 +3,7 @@ import { tripData } from './tripData';
 import MapComponent from './components/MapComponent';
 import { 
   Plane, Utensils, Snowflake, ShoppingBag, MapPin, Info, X, Phone, Image as ImageIcon,
-  FileText, CreditCard, Zap, Smartphone, Thermometer
+  FileText, CreditCard, Zap, Smartphone, Thermometer, Package, Target, ChevronDown, ChevronUp, Navigation, ExternalLink
 } from 'lucide-react';
 import clsx from 'clsx';
 
@@ -11,7 +11,6 @@ function App() {
   const [activeDay, setActiveDay] = useState(0); 
   const [showInfo, setShowInfo] = useState(false);
   
-  // LocalStorage 自動儲存檢查表狀態
   const [checkedItems, setCheckedItems] = useState(() => {
     const saved = localStorage.getItem('hokkaido_checklist');
     return saved ? JSON.parse(saved) : {};
@@ -19,11 +18,29 @@ function App() {
 
   const [selectedLoc, setSelectedLoc] = useState(null);
   const [detailItem, setDetailItem] = useState(null);
+  const [expandedStrategy, setExpandedStrategy] = useState(null);
+  const [tempStrategyMarker, setTempStrategyMarker] = useState(null);
+
   const currentDayData = tripData.days[activeDay];
 
   useEffect(() => {
     localStorage.setItem('hokkaido_checklist', JSON.stringify(checkedItems));
   }, [checkedItems]);
+
+  useEffect(() => {
+    if (!detailItem) {
+      setExpandedStrategy(null);
+    }
+  }, [detailItem]);
+
+  useEffect(() => {
+    if (tempStrategyMarker) {
+      const timer = setTimeout(() => {
+        setTempStrategyMarker(null);
+      }, 15000); 
+      return () => clearTimeout(timer);
+    }
+  }, [tempStrategyMarker]);
 
   const toggleCheck = (itemText) => {
     setCheckedItems(prev => ({
@@ -45,6 +62,23 @@ function App() {
     }
   };
 
+  const handleShowStrategyLoc = (e, strat) => {
+    e.stopPropagation();
+    setDetailItem(null); 
+    setTempStrategyMarker({
+      coords: strat.coords,
+      label: strat.title
+    });
+  };
+
+  // ⚠️ 關鍵修正：優先使用地址搜尋
+  const handleGoogleMapSearch = (e, strat) => {
+    e.stopPropagation();
+    // 如果有提供地址(address)，優先用地址搜尋；否則用標題(title)
+    const query = encodeURIComponent(strat.address || strat.title);
+    window.open(`https://www.google.com/maps/search/?api=1&query=${query}`, '_blank');
+  };
+
   const getIcon = (type) => {
     switch(type) {
       case 'flight': return <Plane className="w-5 h-5 text-blue-500" />;
@@ -62,6 +96,7 @@ function App() {
       case 'finance': return <CreditCard className="text-green-600" />;
       case 'winter': return <Thermometer className="text-red-600" />;
       case 'apps': return <Smartphone className="text-purple-600" />;
+      case 'daily': return <Package className="text-orange-600" />;
       default: return <Zap className="text-yellow-600" />;
     }
   };
@@ -69,7 +104,6 @@ function App() {
   return (
     <div className="min-h-screen bg-ice-50 pb-24 md:pb-10 font-sans text-slate-800">
       
-      {/* Header */}
       <header className="bg-white shadow-sm sticky top-0 z-30 px-4 py-3 flex justify-between items-center">
         <div>
           <h1 className="text-lg font-bold text-ice-900">{tripData.meta.title}</h1>
@@ -82,7 +116,6 @@ function App() {
 
       <main className="max-w-6xl mx-auto p-4">
         
-        {/* Day Selector */}
         <div className="overflow-x-auto pb-4 hide-scrollbar mb-2">
           <div className="flex md:justify-center space-x-3 min-w-max px-1">
             {tripData.days.map((d, idx) => (
@@ -106,10 +139,7 @@ function App() {
           </div>
         </div>
 
-        {/* 內容區塊 */}
         {activeDay === 0 ? (
-          
-          /* --- Day 0: 行前準備 Dashboard --- */
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 animate-fade-in">
             {currentDayData.categories.map((cat, idx) => (
               <div key={idx} className="bg-white rounded-xl shadow-sm border border-ice-100 overflow-hidden hover:shadow-md transition-shadow">
@@ -126,12 +156,16 @@ function App() {
                   <div className="space-y-4">
                     {cat.items.map((item, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        <input 
-                          type="checkbox"
-                          checked={!!checkedItems[item.text]}
-                          onChange={() => toggleCheck(item.text)}
-                          className="mt-1 w-5 h-5 text-ice-500 rounded border-gray-300 focus:ring-ice-500 cursor-pointer flex-shrink-0"
-                        />
+                        {cat.type !== 'apps' ? (
+                          <input 
+                            type="checkbox"
+                            checked={!!checkedItems[item.text]}
+                            onChange={() => toggleCheck(item.text)}
+                            className="mt-1 w-5 h-5 text-ice-500 rounded border-gray-300 focus:ring-ice-500 cursor-pointer flex-shrink-0"
+                          />
+                        ) : (
+                          <div className="mt-1.5 w-2 h-2 rounded-full bg-ice-400 flex-shrink-0"></div>
+                        )}
                         <div className={clsx(checkedItems[item.text] && "opacity-50 transition-opacity")}>
                           <p className={clsx("text-base font-bold text-slate-800", checkedItems[item.text] && "line-through")}>
                             {item.text}
@@ -145,13 +179,8 @@ function App() {
               </div>
             ))}
           </div>
-
         ) : (
-
-          /* --- Day 1-5: 行程 + 地圖 --- */
           <div className="md:grid md:grid-cols-12 md:gap-6">
-            
-            {/* 左側列表 */}
             <div className="md:col-span-5 space-y-4">
               <div className="bg-white rounded-xl p-5 shadow-sm border border-ice-100">
                 <h2 className="text-2xl font-bold text-ice-900 flex items-center gap-2">
@@ -183,10 +212,18 @@ function App() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex justify-between items-baseline">
-                        <h3 className="font-bold text-slate-800 truncate group-hover:text-ice-600">{item.activity}</h3>
+                        <h3 className="font-bold text-slate-800 truncate group-hover:text-ice-600">
+                          {item.activity}
+                        </h3>
                         <span className="text-xs font-mono text-slate-400 whitespace-nowrap ml-2">{item.time}</span>
                       </div>
                       <p className="text-xs text-slate-500 line-clamp-1 mt-0.5">{item.desc}</p>
+                      {item.strategies && (
+                        <div className="mt-1.5 inline-flex items-center px-1.5 py-0.5 bg-red-50 text-red-600 text-[10px] font-bold rounded border border-red-100">
+                           <Target size={10} className="mr-1" /> 
+                           含 {item.strategies.length} 個戰略點
+                        </div>
+                      )}
                     </div>
                     {item.coords && (
                       <button
@@ -202,20 +239,21 @@ function App() {
               </div>
             </div>
 
-            {/* 右側地圖 */}
             <div className="md:col-span-7 mt-6 md:mt-0 sticky md:top-24 h-[350px] md:h-[calc(100vh-120px)] bg-slate-100 rounded-xl shadow-inner overflow-hidden border border-slate-200 z-0">
-              <MapComponent schedule={currentDayData.schedule || []} selectedLocation={selectedLoc} />
+              <MapComponent 
+                schedule={currentDayData.schedule || []} 
+                selectedLocation={selectedLoc} 
+                tempMarker={tempStrategyMarker}
+              />
             </div>
-
           </div>
         )}
       </main>
 
-      {/* Detail Modal */}
       {detailItem && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in" onClick={() => setDetailItem(null)}>
-          <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
-            <div className="h-32 bg-gradient-to-r from-ice-400 to-blue-500 flex items-center justify-center relative">
+          <div className="bg-white w-full max-w-md rounded-2xl overflow-hidden shadow-2xl relative max-h-[85vh] overflow-y-auto hide-scrollbar" onClick={e => e.stopPropagation()}>
+            <div className="h-32 bg-gradient-to-r from-ice-400 to-blue-500 flex items-center justify-center relative flex-shrink-0">
                <ImageIcon className="text-white/50 w-12 h-12" />
                <button onClick={() => setDetailItem(null)} className="absolute top-4 right-4 p-1 bg-black/20 text-white rounded-full hover:bg-black/40 backdrop-blur-md transition-colors"><X size={20} /></button>
             </div>
@@ -225,6 +263,55 @@ function App() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900 mb-3">{detailItem.activity}</h2>
               <p className="text-slate-600 leading-relaxed mb-6 border-l-4 border-ice-200 pl-3">{detailItem.desc}</p>
+              
+              {detailItem.strategies && (
+                <div className="mb-6">
+                  <h3 className="font-bold text-red-600 mb-2 flex items-center gap-1.5">
+                    <Target size={18} /> 戰略補給 / 額外情報
+                  </h3>
+                  <div className="space-y-2">
+                    {detailItem.strategies.map((strat, idx) => (
+                      <div key={idx} className="border border-red-100 rounded-lg overflow-hidden bg-red-50/50">
+                        <button 
+                          onClick={() => setExpandedStrategy(expandedStrategy === idx ? null : idx)}
+                          className="w-full p-3 flex items-center justify-between text-left hover:bg-red-50 transition-colors"
+                        >
+                          <div>
+                            <span className="text-xs font-bold text-red-600 bg-red-100 px-1.5 py-0.5 rounded mr-2">
+                              {strat.tag}
+                            </span>
+                            <span className="font-bold text-slate-800 text-sm">{strat.title}</span>
+                          </div>
+                          {expandedStrategy === idx ? <ChevronUp size={16} className="text-red-400"/> : <ChevronDown size={16} className="text-red-400"/>}
+                        </button>
+                        
+                        {expandedStrategy === idx && (
+                          <div className="p-3 pt-0 text-sm text-slate-600 border-t border-red-100 bg-white">
+                            <p className="mb-3 leading-relaxed">{strat.desc}</p>
+                            
+                            <div className="flex gap-2">
+                              <button 
+                                onClick={(e) => handleShowStrategyLoc(e, strat)}
+                                className="flex-1 py-2 bg-red-600 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-red-700"
+                              >
+                                <Navigation size={12} /> 顯示 {strat.title} 位置
+                              </button>
+
+                              <button 
+                                onClick={(e) => handleGoogleMapSearch(e, strat)}
+                                className="flex-1 py-2 bg-white text-slate-700 border border-slate-300 rounded-lg text-xs font-bold flex items-center justify-center gap-1 hover:bg-slate-50"
+                              >
+                                <ExternalLink size={12} /> Google Map 開啟
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {detailItem.coords ? (
                 <a href={`https://www.google.com/maps/search/?api=1&query=${detailItem.coords[0]},${detailItem.coords[1]}`} target="_blank" rel="noreferrer" className="flex items-center justify-center gap-2 w-full py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-700 hover:shadow-lg transition-all"><MapPin size={18} /> 開啟 Google Maps 導航</a>
               ) : (
@@ -235,7 +322,6 @@ function App() {
         </div>
       )}
 
-      {/* Info Modal */}
       {showInfo && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowInfo(false)}>
           <div className="bg-white w-full max-w-sm rounded-2xl p-6 shadow-2xl relative" onClick={e => e.stopPropagation()}>
