@@ -1,32 +1,29 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { tripData } from './tripData';
 import MapComponent from './components/MapComponent';
 import { 
-  Plane, Utensils, Snowflake, ShoppingBag, MapPin, CheckSquare, Info, X, Phone, Image as ImageIcon,
-  FileText, CreditCard, Zap, Smartphone, Thermometer, ExternalLink
+  Plane, Utensils, Snowflake, ShoppingBag, MapPin, Info, X, Phone, Image as ImageIcon,
+  FileText, CreditCard, Zap, Smartphone, Thermometer
 } from 'lucide-react';
 import clsx from 'clsx';
 
 function App() {
-  const [activeDay, setActiveDay] = useState(0); // 預設從 Day 0 開始
+  const [activeDay, setActiveDay] = useState(0); 
   const [showInfo, setShowInfo] = useState(false);
   
-  // Day 0 的檢查狀態 (使用簡單的物件來記錄: { "護照": true, "現金": false })
-  // 1. 初始化：從 LocalStorage 讀取紀錄，如果沒有就給空物件
+  // LocalStorage 自動儲存檢查表狀態
   const [checkedItems, setCheckedItems] = useState(() => {
-    const saved = localStorage.getItem('hokkaido-checklist');
+    const saved = localStorage.getItem('hokkaido_checklist');
     return saved ? JSON.parse(saved) : {};
   });
 
-  // 2. 監聽變動：只要 checkedItems 有改變，就存入 LocalStorage
-  React.useEffect(() => {
-    localStorage.setItem('hokkaido-checklist', JSON.stringify(checkedItems));
-  }, [checkedItems]);
-
   const [selectedLoc, setSelectedLoc] = useState(null);
   const [detailItem, setDetailItem] = useState(null);
-
   const currentDayData = tripData.days[activeDay];
+
+  useEffect(() => {
+    localStorage.setItem('hokkaido_checklist', JSON.stringify(checkedItems));
+  }, [checkedItems]);
 
   const toggleCheck = (itemText) => {
     setCheckedItems(prev => ({
@@ -54,11 +51,11 @@ function App() {
       case 'food': return <Utensils className="w-5 h-5 text-orange-500" />;
       case 'highlight': return <Snowflake className="w-5 h-5 text-cyan-500" />;
       case 'shop': return <ShoppingBag className="w-5 h-5 text-pink-500" />;
+      case 'activity': return <MapPin className="w-5 h-5 text-green-500" />;
       default: return <MapPin className="w-5 h-5 text-gray-400" />;
     }
   };
 
-  // Day 0 專用圖示
   const getCategoryIcon = (type) => {
     switch(type) {
       case 'docs': return <FileText className="text-blue-600" />;
@@ -96,20 +93,20 @@ function App() {
                   setSelectedLoc(null); 
                 }}
                 className={clsx(
-                  "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all",
+                  "flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap",
                   activeDay === idx 
                     ? "bg-ice-500 text-white shadow-md scale-105" 
                     : "bg-white text-slate-600 border border-slate-100 hover:bg-ice-50"
                 )}
               >
                 {d.day === 0 ? "行前準備" : `Day ${d.day}`}
-                <span className="block text-[10px] opacity-90">{d.region}</span>
+                <span className="block text-[10px] opacity-90">{d.region.split(' ')[0]}</span>
               </button>
             ))}
           </div>
         </div>
 
-        {/* 內容區塊：根據是否為 Day 0 切換顯示模式 */}
+        {/* 內容區塊 */}
         {activeDay === 0 ? (
           
           /* --- Day 0: 行前準備 Dashboard --- */
@@ -122,29 +119,24 @@ function App() {
                 </div>
                 <div className="p-4">
                   {cat.note && (
-                    <div className="mb-3 p-2 bg-red-50 text-red-700 text-xs rounded border border-red-100">
-                      💡 {cat.note}
+                    <div className="mb-4 p-3 bg-red-50 text-red-700 text-sm rounded-lg border border-red-100 font-medium">
+                      ⚠️ {cat.note}
                     </div>
                   )}
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {cat.items.map((item, i) => (
                       <div key={i} className="flex items-start gap-3">
-                        {/* 除了 App 類別外，其他都顯示 Checkbox */}
-                        {cat.type !== 'apps' ? (
-                          <input 
-                            type="checkbox"
-                            checked={!!checkedItems[item.text]}
-                            onChange={() => toggleCheck(item.text)}
-                            className="mt-1 w-4 h-4 text-ice-500 rounded border-gray-300 focus:ring-ice-500 cursor-pointer"
-                          />
-                        ) : (
-                          <div className="mt-1 w-1.5 h-1.5 rounded-full bg-ice-400 flex-shrink-0" />
-                        )}
+                        <input 
+                          type="checkbox"
+                          checked={!!checkedItems[item.text]}
+                          onChange={() => toggleCheck(item.text)}
+                          className="mt-1 w-5 h-5 text-ice-500 rounded border-gray-300 focus:ring-ice-500 cursor-pointer flex-shrink-0"
+                        />
                         <div className={clsx(checkedItems[item.text] && "opacity-50 transition-opacity")}>
-                          <p className={clsx("text-sm font-bold text-slate-700", checkedItems[item.text] && "line-through")}>
+                          <p className={clsx("text-base font-bold text-slate-800", checkedItems[item.text] && "line-through")}>
                             {item.text}
                           </p>
-                          <p className="text-xs text-slate-500 mt-0.5">{item.desc}</p>
+                          <p className="text-sm text-slate-600 mt-1 leading-relaxed">{item.desc}</p>
                         </div>
                       </div>
                     ))}
@@ -156,7 +148,7 @@ function App() {
 
         ) : (
 
-          /* --- Day 1-5: 行程 + 地圖 (維持原本設計) --- */
+          /* --- Day 1-5: 行程 + 地圖 --- */
           <div className="md:grid md:grid-cols-12 md:gap-6">
             
             {/* 左側列表 */}
@@ -164,12 +156,12 @@ function App() {
               <div className="bg-white rounded-xl p-5 shadow-sm border border-ice-100">
                 <h2 className="text-2xl font-bold text-ice-900 flex items-center gap-2">
                   <span className="text-4xl text-ice-200 font-black">{currentDayData.day}</span>
-                  {currentDayData.region}
+                  {currentDayData.region.split(' ')[0]}
                 </h2>
                 <p className="text-sm text-slate-500 mt-1">🏨 {currentDayData.hotel}</p>
                 <div className="mt-4 flex flex-wrap gap-2">
                   {currentDayData.highlights.map(tag => (
-                    <span key={tag} className="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-100 text-xs rounded-md">
+                    <span key={tag} className="px-2 py-1 bg-yellow-50 text-yellow-700 border border-yellow-100 text-xs rounded-md font-medium">
                       ✨ {tag}
                     </span>
                   ))}
