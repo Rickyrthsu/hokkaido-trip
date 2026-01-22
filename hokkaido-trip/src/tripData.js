@@ -1,6 +1,6 @@
 export const tripData = {
   "meta": {
-    "title": "Ricky's Hokkaido Deep Strategy Trip",
+    "title": "Ricky's Hokkaido Trip",
     "dates": "2026/01/24 - 2026/01/28",
     "flight_out": "IT238 (07:35 TPE -> 12:30 AKJ)",
     "flight_in": "IT237 (12:20 HKD -> 16:00 TPE)",
